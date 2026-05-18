@@ -1,5 +1,5 @@
+#Læser alle CSV-filer og kombinerer dem til én stor DataFrame
 import pandas as pd
-import os
 from pathlib import Path
 
 def load_data() -> pd.DataFrame:
@@ -26,6 +26,8 @@ def load_data() -> pd.DataFrame:
     combined = combined[[c for c in cols if c in combined.columns]]
     #fjerner kampe hvor resultat mangler
     combined = combined.dropna(subset=["FTR"])
+
+    combined["Date"] = pd.to_datetime(combined["Date"], format="mixed", errors="coerce")
     
     return combined
 
