@@ -6,3 +6,4 @@ data/raw/
 backend/model/model.h5
 *.h5
 .DS_Store
+.claude/
