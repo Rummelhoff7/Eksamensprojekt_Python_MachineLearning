@@ -1,3 +1,5 @@
+#	Beregner statistik for hvert hold (form, mål, head-to-head)
+
 import pandas as pd
 
 N_GAMES = 5
