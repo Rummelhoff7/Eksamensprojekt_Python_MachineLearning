@@ -29,3 +29,6 @@ class AnalysisResponse(BaseModel):
 
 class TeamListResponse(BaseModel):
     teams: list[str]
+
+class ChatRequest(BaseModel):
+    message: str

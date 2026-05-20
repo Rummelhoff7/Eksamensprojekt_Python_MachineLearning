@@ -81,7 +81,7 @@ def build_features(df):
     Går igennem alle kampe og beregner features FØR hver kamp — ingen data leakage.
     """
     df = df.copy()
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
+    df["Date"] = pd.to_datetime(df["Date"], format="mixed", errors="coerce")
     df = df.sort_values("Date").reset_index(drop=True)
 
     rows = []
@@ -121,8 +121,8 @@ def get_prediction_features(df, home_team, away_team):
     Bruges af API'en — bruger den nyeste tilgængelige data.
     """
     df = df.copy()
-    df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
-
+    df["Date"] = pd.to_datetime(df["Date"], format="mixed", errors="coerce")
+    
     # Sætter datoen til i dag så vi bruger al historisk data
     future = pd.Timestamp.now()
 

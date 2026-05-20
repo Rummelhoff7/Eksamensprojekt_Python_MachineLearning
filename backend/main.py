@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import pandas as pd
 
-from schemas import PredictionRequest, PredictionResponse, AnalysisRequest, AnalysisResponse, TeamListResponse
+from schemas import PredictionRequest, PredictionResponse, AnalysisRequest, AnalysisResponse, TeamListResponse, ChatRequest
 from data.loader import load_data
 from data.prepare import get_prediction_features, FEATURE_COLS
 from data.prepare import get_home_stats, get_away_stats, get_form
@@ -136,7 +136,7 @@ Skriv en kort matchanalyse på 3-4 sætninger."""
 
 
 @app.post("/chat")
-def chat(req: dict):
+def chat(req: ChatRequest):
     api_key = os.getenv("MISTRAL_API_KEY", "")
     
     response = requests.post(
