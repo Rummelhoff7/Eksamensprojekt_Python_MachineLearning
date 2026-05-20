@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import os
+import matplotlib.pyplot as plt
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
@@ -48,14 +49,30 @@ if "valgt_hold" in st.session_state:
     hold = st.session_state["valgt_hold"]
     st.divider()
     st.subheader(f"{hold}")
-    
+
+    # Hent stats og form historik fra backend
     stats = requests.get(f"{BACKEND_URL}/stats/{hold}/home").json()
-    
+    form  = requests.get(f"{BACKEND_URL}/form/{hold}").json()["form"]
+
+    # Vis metrics
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Mål scoret (hjemme)", f"{stats['gs']:.2f}")
     col2.metric("Mål lukket ind (hjemme)", f"{stats['gc']:.2f}")
     col3.metric("Vinder-rate (hjemme)", f"{stats['wr']:.0%}")
     col4.metric("Form (gns. point)", f"{stats['form']:.2f}")
+
+    # Form over tid
+    st.subheader("Form over tid")
+    fig, ax = plt.subplots()
+    ax.plot(form, marker="o", color="#1e90ff")
+    ax.set_ylabel("Point")
+    ax.set_xlabel("Kamp")
+    ax.set_yticks([0, 1, 3])
+    ax.set_ylim(-0.2, 3.2)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    st.pyplot(fig)
+    plt.close()
 
 
 """""

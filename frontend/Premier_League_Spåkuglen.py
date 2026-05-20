@@ -145,11 +145,3 @@ if st.button("Forudsig kamp", type="primary", use_container_width=True):
         st.write(analysis_resp.json()["analysis"])
 
 
-st.title("Fodbold Chat")
-
-spørgsmål = st.text_input("Stil et spørgsmål om Premier League")
-
-if st.button("Send"):
-    with st.spinner("Tænker..."):
-        svar = requests.post(f"{BACKEND_URL}/chat", json={"message": spørgsmål})
-        st.write(svar.json()["response"])
