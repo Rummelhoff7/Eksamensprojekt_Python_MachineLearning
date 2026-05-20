@@ -1,4 +1,5 @@
 #Selve API'en — modtager forespørgsler og sender svar tilbage
+#https://fastapi.tiangolo.com/tutorial/
 
 import os
 import pickle
@@ -13,6 +14,8 @@ from schemas import PredictionRequest, PredictionResponse, AnalysisRequest, Anal
 from data.loader import load_data
 from data.prepare import get_prediction_features, FEATURE_COLS
 from data.prepare import get_home_stats, get_away_stats, get_form
+from dotenv import load_dotenv
+load_dotenv()
 
 MODEL_PATH = Path(__file__).parent / "model" / "pl_predictor.pkl"
 
@@ -21,22 +24,23 @@ _model = None
 _df = None
 
 
-print("📥 Indlæser data...")
+print(" Indlæser data...")
 _df = load_data()
 
-print("🤖 Indlæser model...")
+print(" Indlæser model...")
 if not MODEL_PATH.exists():
     raise RuntimeError(f"Model ikke fundet: {MODEL_PATH}. Kør train.py først.")
 
 with open(MODEL_PATH, "rb") as f:
     _model = pickle.load(f)
 
-print("✅ Klar!")
+print(" Klar!")
 
 app = FastAPI(title="Premier League Predictor")
 
 
 # Tillader Streamlit at snakke med API'en
+#https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -129,3 +133,23 @@ Skriv en kort matchanalyse på 3-4 sætninger."""
 
     content = response.json()["choices"][0]["message"]["content"]
     return AnalysisResponse(analysis=content)
+
+
+@app.post("/chat")
+def chat(req: dict):
+    api_key = os.getenv("MISTRAL_API_KEY", "")
+    
+    response = requests.post(
+        "https://api.mistral.ai/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={
+            "model": "mistral-small-latest",
+            "messages": [
+                {"role": "system", "content": "Du er en Premier League fodboldekspert."},
+                {"role": "user", "content": req["message"]}
+            ],
+            "max_tokens": 300,
+        },
+        timeout=30,
+    )
+    return {"response": response.json()["choices"][0]["message"]["content"]}

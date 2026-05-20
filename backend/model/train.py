@@ -3,6 +3,7 @@
 #Hurtigt at træne ift. DNN.
 #Formålet er at forudsige 3 kategorier (H/D/A)
 #DNN ville være overkill i dette projekt.
+#Træner XGBoost modellen og gemmer den som .pkl fil
 
 
 import pickle          # bruges til at gemme modellen som en fil
@@ -59,13 +60,13 @@ def train():
     # Evaluering
     y_pred = model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
-    print(f"\n✅ Accuracy: {acc:.1%}")
+    print(f"\n Accuracy: {acc:.1%}")
     print(classification_report(y_test, y_pred, target_names=["Hjemme", "Uafgjort", "Ude"]))
 
     # Gem model
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(model, f)
-    print(f"💾 Model gemt: {MODEL_PATH}")
+    print(f" Model gemt: {MODEL_PATH}")
 
 
 if __name__ == "__main__":

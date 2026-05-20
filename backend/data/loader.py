@@ -33,5 +33,5 @@ def load_data() -> pd.DataFrame:
 
 if __name__ == "__main__":
     df = load_data()
-    print(f"✅ Loaded {len(df)} matches")
+    print(f"Loaded {len(df)} matches")
     print(df.head())
