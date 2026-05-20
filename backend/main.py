@@ -14,6 +14,7 @@ from schemas import PredictionRequest, PredictionResponse, AnalysisRequest, Anal
 from data.loader import load_data
 from data.prepare import get_prediction_features, FEATURE_COLS
 from data.prepare import get_home_stats, get_away_stats, get_form
+from data.prepare import get_form_history
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -146,10 +147,52 @@ def chat(req: ChatRequest):
             "model": "mistral-small-latest",
             "messages": [
                 {"role": "system", "content": "Du er en Premier League fodboldekspert."},
-                {"role": "user", "content": req["message"]}
+                {"role": "user", "content": req.message}
             ],
             "max_tokens": 300,
         },
         timeout=30,
     )
     return {"response": response.json()["choices"][0]["message"]["content"]}
+
+
+@app.get("/form/{team}")
+def form_history(team: str):
+    return {"form": get_form_history(_df, team)}
+
+
+@app.get("/table/{season}")
+def get_table(season: str):
+    df = _df[_df["season"] == season]
+
+    table = []
+    teams = sorted(set(df["HomeTeam"].unique()) | set(df["AwayTeam"].unique()))
+
+    for team in teams:
+        home_games = df[df["HomeTeam"] == team]
+        away_games = df[df["AwayTeam"] == team]
+
+        wins   = (home_games["FTR"] == "H").sum() + (away_games["FTR"] == "A").sum()
+        draws  = (home_games["FTR"] == "D").sum() + (away_games["FTR"] == "D").sum()
+        losses = (home_games["FTR"] == "A").sum() + (away_games["FTR"] == "H").sum()
+        played = wins + draws + losses
+        points = wins * 3 + draws
+
+        table.append({
+            "team":    team,
+            "played":  int(played),
+            "wins":    int(wins),
+            "draws":   int(draws),
+            "losses":  int(losses),
+            "points":  int(points),
+        })
+
+    table = sorted(table, key=lambda x: x["points"], reverse=True)
+
+    return {"table": table}
+
+
+@app.get("/seasons")
+def get_seasons():
+    seasons = sorted(_df["season"].unique().tolist(), reverse=True)
+    return {"seasons": seasons}

@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+
 N_GAMES = 5
 
 FEATURE_COLS = [
@@ -14,64 +15,64 @@ FEATURE_COLS = [
 
 def get_home_stats(df, team, date):
     """Hjemmeholdets statistik fra de seneste N hjemmekampe før given dato."""
-    kampe = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
+    matches = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
 
-    if len(kampe) == 0:
+    if len(matches) == 0:
         return {"gs": 1.5, "gc": 1.1, "wr": 0.46}
 
     return {
-        "gs": kampe["FTHG"].mean(),   # mål scoret hjemme
-        "gc": kampe["FTAG"].mean(),   # mål lukket ind hjemme
-        "wr": (kampe["FTR"] == "H").mean(),  # vinder-rate hjemme
+        "gs": matches["FTHG"].mean(),   # mål scoret hjemme
+        "gc": matches["FTAG"].mean(),   # mål lukket ind hjemme
+        "wr": (matches["FTR"] == "H").mean(),  # vinder-rate hjemme
     }
 
 
 def get_away_stats(df, team, date):
     """Udeholdets statistik fra de seneste N udekampe før given dato."""
-    kampe = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
+    matches = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
 
-    if len(kampe) == 0:
+    if len(matches) == 0:
         return {"gs": 1.1, "gc": 1.5, "wr": 0.27}
 
     return {
-        "gs": kampe["FTAG"].mean(),   # mål scoret ude
-        "gc": kampe["FTHG"].mean(),   # mål lukket ind ude
-        "wr": (kampe["FTR"] == "A").mean(),  # vinder-rate ude
+        "gs": matches["FTAG"].mean(),   # mål scoret ude
+        "gc": matches["FTHG"].mean(),   # mål lukket ind ude
+        "wr": (matches["FTR"] == "A").mean(),  # vinder-rate ude
     }
 
 
 def get_form(df, team, date):
     """Gennemsnitlige point per kamp de seneste N kampe (hjemme + ude)."""
-    hjemme = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
-    ude    = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
+    home_games = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
+    away_games = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
 
-    hjemme["pts"] = hjemme["FTR"].map({"H": 3, "D": 1, "A": 0})
-    ude["pts"]    = ude["FTR"].map({"H": 0, "D": 1, "A": 3})
+    home_games["pts"] = home_games["FTR"].map({"H": 3, "D": 1, "A": 0})
+    away_games["pts"] = away_games["FTR"].map({"H": 0, "D": 1, "A": 3})
 
-    alle = pd.concat([hjemme[["Date", "pts"]], ude[["Date", "pts"]]])
-    alle = alle.sort_values("Date").tail(N_GAMES)
+    all_games = pd.concat([home_games[["Date", "pts"]], away_games[["Date", "pts"]]])
+    all_games = all_games.sort_values("Date").tail(N_GAMES)
 
-    if len(alle) == 0:
+    if len(all_games) == 0:
         return 1.3
 
-    return alle["pts"].mean()
+    return all_games["pts"].mean()
 
 
 def get_h2h(df, home_team, away_team, date):
     """Head-to-head historik mellem to hold."""
-    kampe = df[
+    matches = df[
         (df["HomeTeam"] == home_team) &
         (df["AwayTeam"] == away_team) &
         (df["Date"] < date)
     ].tail(10)
 
-    if len(kampe) == 0:
+    if len(matches) == 0:
         return {"h": 0.40, "d": 0.27, "a": 0.33}
 
     return {
-        "h": (kampe["FTR"] == "H").mean(),
-        "d": (kampe["FTR"] == "D").mean(),
-        "a": (kampe["FTR"] == "A").mean(),
+        "h": (matches["FTR"] == "H").mean(),
+        "d": (matches["FTR"] == "D").mean(),
+        "a": (matches["FTR"] == "A").mean(),
     }
 
 
@@ -122,7 +123,7 @@ def get_prediction_features(df, home_team, away_team):
     """
     df = df.copy()
     df["Date"] = pd.to_datetime(df["Date"], format="mixed", errors="coerce")
-    
+
     # Sætter datoen til i dag så vi bruger al historisk data
     future = pd.Timestamp.now()
 
@@ -143,3 +144,19 @@ def get_prediction_features(df, home_team, away_team):
         "h2h_d":     h2h["d"],
         "h2h_a":     h2h["a"],
     }])[FEATURE_COLS]
+
+
+def get_form_history(df, team, n=10):
+    """Returnerer point per kamp for de seneste n kampe."""
+    future = pd.Timestamp.now()
+
+    home_games = df[(df["HomeTeam"] == team) & (df["Date"] < future)].copy()
+    away_games = df[(df["AwayTeam"] == team) & (df["Date"] < future)].copy()
+
+    home_games["pts"] = home_games["FTR"].map({"H": 3, "D": 1, "A": 0})
+    away_games["pts"] = away_games["FTR"].map({"H": 0, "D": 1, "A": 3})
+
+    all_games = pd.concat([home_games[["Date", "pts"]], away_games[["Date", "pts"]]])
+    all_games = all_games.sort_values("Date").tail(n)
+
+    return all_games["pts"].tolist()
