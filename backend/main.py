@@ -1,10 +1,25 @@
-#Selve API'en — modtager forespørgsler og sender svar tilbage
-#https://fastapi.tiangolo.com/tutorial/
+#Selve API'en — modtager forespørgsler fra frontend og sender svar tilbage
+
+#Bruges af Streamlit via frontend til HTTP request
+
+# Endpoints:
+#   GET  /health               — tjekker om API'en kører
+#   GET  /teams                — returnerer liste af alle hold
+#   GET  /stats/{team}/{side}  — returnerer statistik for et hold (home/away)
+#   GET  /form/{team}          — returnerer form historik for et hold
+#   GET  /table/{season}       — returnerer ligatable for en sæson
+#   GET  /seasons              — returnerer liste af alle sæsoner
+#   GET  /results/{team}       — returnerer sejre/uafgjort/tab for et hold
+#   POST /predict              — forudsiger kampresultat med XGBoost modellen (ml)
+#   POST /analyze              — genererer AI matchanalyse via Mistral
+#   POST /chat                 — fodbold chatbot via Mistral
+
 
 import os
 import pickle
 from pathlib import Path
 
+#Kilde: https://fastapi.tiangolo.com/tutorial/
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -12,36 +27,30 @@ import pandas as pd
 
 from schemas import PredictionRequest, PredictionResponse, AnalysisRequest, AnalysisResponse, TeamListResponse, ChatRequest
 from data.loader import load_data
-from data.prepare import get_prediction_features, FEATURE_COLS
-from data.prepare import get_home_stats, get_away_stats, get_form
-from data.prepare import get_form_history
+from data.prepare import get_home_stats, get_away_stats, get_form, get_form_history, get_prediction_features, FEATURE_COLS
 from dotenv import load_dotenv
 load_dotenv()
 
 MODEL_PATH = Path(__file__).parent / "model" / "pl_predictor.pkl"
 
-# Global state
-_model = None
-_df = None
 
-
-print(" Indlæser data...")
+print("Indlæser data...")
 _df = load_data()
 
-print(" Indlæser model...")
+print("Indlæser model...")
 if not MODEL_PATH.exists():
     raise RuntimeError(f"Model ikke fundet: {MODEL_PATH}. Kør train.py først.")
 
 with open(MODEL_PATH, "rb") as f:
     _model = pickle.load(f)
 
-print(" Klar!")
+print("Klar!")
 
 app = FastAPI(title="Premier League Predictor")
 
 
 # Tillader Streamlit at snakke med API'en
-#https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
+#Kilde: https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -60,20 +69,22 @@ def get_teams():
     teams = sorted(set(_df["HomeTeam"].unique()) | set(_df["AwayTeam"].unique()))
     return TeamListResponse(teams=teams)
 
+
 @app.get("/stats/{team}/{side}")
 def get_team_stats(team: str, side: str):
     if side not in ["home", "away"]:
         raise HTTPException(status_code=400, detail="Side skal være 'home' eller 'away'")
 
-
+    latest_season = _df["season"].max()
+    df = _df[_df["season"] == latest_season]
     future = pd.Timestamp.now()
 
     if side == "home":
-        stats = get_home_stats(_df, team, future)
+        stats = get_home_stats(df, team, future)
     else:
-        stats = get_away_stats(_df, team, future)
+        stats = get_away_stats(df, team, future)
 
-    stats["form"] = get_form(_df, team, future)
+    stats["form"] = get_form(df, team, future)
 
     return stats
 
@@ -136,6 +147,8 @@ Skriv en kort matchanalyse på 3-4 sætninger."""
     return AnalysisResponse(analysis=content)
 
 
+
+#Kilde https://docs.mistral.ai/api
 @app.post("/chat")
 def chat(req: ChatRequest):
     api_key = os.getenv("MISTRAL_API_KEY", "")
@@ -196,3 +209,22 @@ def get_table(season: str):
 def get_seasons():
     seasons = sorted(_df["season"].unique().tolist(), reverse=True)
     return {"seasons": seasons}
+
+
+@app.get("/results/{team}")
+def get_results(team: str):
+    latest_season = _df["season"].max()
+    df = _df[_df["season"] == latest_season]
+
+    home_games = df[df["HomeTeam"] == team]
+    away_games = df[df["AwayTeam"] == team]
+
+    wins   = (home_games["FTR"] == "H").sum() + (away_games["FTR"] == "A").sum()
+    draws  = (home_games["FTR"] == "D").sum() + (away_games["FTR"] == "D").sum()
+    losses = (home_games["FTR"] == "A").sum() + (away_games["FTR"] == "H").sum()
+
+    return {
+        "wins":   int(wins),
+        "draws":  int(draws),
+        "losses": int(losses),
+    }

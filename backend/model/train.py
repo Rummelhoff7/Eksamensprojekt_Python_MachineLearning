@@ -3,7 +3,9 @@
 #Hurtigt at træne ift. DNN.
 #Formålet er at forudsige 3 kategorier (H/D/A)
 #DNN ville være overkill i dette projekt.
-#Træner XGBoost modellen og gemmer den som .pkl fil
+
+#Bruger CSV-filer via loader.py og features via prepare.py
+#Træner XGBoost modellen og gemmer den som .pkl fil. (pl_predictor_pkl)
 
 
 import pickle          # bruges til at gemme modellen som en fil

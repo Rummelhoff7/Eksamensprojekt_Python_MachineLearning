@@ -1,3 +1,11 @@
+#Denne fil defininerer datastruktur for API request og response
+#Bruges a main.py til at validere data, som sendes til og fra api'en
+
+# Request  = data der sendes til API'en (f.eks. hvilke hold skal forudsiges)
+# Response = data der returneres fra API'en (f.eks. sandsynligheder og resultat)
+
+#Pydantic sikrer at data har de rigtige typer.
+#kilde: https://pydantic.dev/docs/validation/latest/concepts/models
 from pydantic import BaseModel
 
 

@@ -1,4 +1,11 @@
-#	Beregner statistik for hvert hold (form, mål, head-to-head)
+# Beregner statistik for hvert hold ud fra historisk data.
+# Bruges af: train.py til at bygge træningsdata og main.py til forudsigelser.
+# Input: Dataframe fra loader.py
+# Output: Features som XGboost modellen kan bruge
+
+# Al statistik beregnes før kampens data, så ingen data leakage
+# Betyder at modellen kun ser data der var tilgængeligt før kampen
+
 
 import pandas as pd
 
@@ -12,9 +19,9 @@ FEATURE_COLS = [
     "h2h_h", "h2h_d", "h2h_a",
 ]
 
-
+#Hjemmeholdets statistik fra de seneste N hjemmekampe før given dato.
 def get_home_stats(df, team, date):
-    """Hjemmeholdets statistik fra de seneste N hjemmekampe før given dato."""
+
     matches = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
 
     if len(matches) == 0:
@@ -26,9 +33,8 @@ def get_home_stats(df, team, date):
         "wr": (matches["FTR"] == "H").mean(),  # vinder-rate hjemme
     }
 
-
+#Udeholdets statistik fra de seneste N udekampe før given dato.
 def get_away_stats(df, team, date):
-    """Udeholdets statistik fra de seneste N udekampe før given dato."""
     matches = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES)
 
     if len(matches) == 0:
@@ -41,8 +47,8 @@ def get_away_stats(df, team, date):
     }
 
 
+#Gennemsnitlige point per kamp de seneste N kampe (hjemme + ude)
 def get_form(df, team, date):
-    """Gennemsnitlige point per kamp de seneste N kampe (hjemme + ude)."""
     home_games = df[(df["HomeTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
     away_games = df[(df["AwayTeam"] == team) & (df["Date"] < date)].tail(N_GAMES).copy()
 
@@ -58,8 +64,8 @@ def get_form(df, team, date):
     return all_games["pts"].mean()
 
 
+#Head-to-head historik mellem to hold.
 def get_h2h(df, home_team, away_team, date):
-    """Head-to-head historik mellem to hold."""
     matches = df[
         (df["HomeTeam"] == home_team) &
         (df["AwayTeam"] == away_team) &
@@ -76,6 +82,8 @@ def get_h2h(df, home_team, away_team, date):
     }
 
 
+
+#Bygger features til træning. Går igennem alle kampe og beregner features FØR hver kamp — ingen data leakage.
 def build_features(df):
     """
     Bygger features til træning.
@@ -116,11 +124,10 @@ def build_features(df):
     return pd.DataFrame(rows)
 
 
+
+# Beregner features til en kommende kamp.
+# Bruges af API'en — bruger den nyeste tilgængelige data.
 def get_prediction_features(df, home_team, away_team):
-    """
-    Beregner features til en kommende kamp.
-    Bruges af API'en — bruger den nyeste tilgængelige data.
-    """
     df = df.copy()
     df["Date"] = pd.to_datetime(df["Date"], format="mixed", errors="coerce")
 
@@ -145,13 +152,13 @@ def get_prediction_features(df, home_team, away_team):
         "h2h_a":     h2h["a"],
     }])[FEATURE_COLS]
 
-
+#Returnerer point per kamp for de seneste n kampe i nyeste sæson.
 def get_form_history(df, team, n=10):
-    """Returnerer point per kamp for de seneste n kampe."""
-    future = pd.Timestamp.now()
+    latest_season = df["season"].max()
+    df = df[df["season"] == latest_season]
 
-    home_games = df[(df["HomeTeam"] == team) & (df["Date"] < future)].copy()
-    away_games = df[(df["AwayTeam"] == team) & (df["Date"] < future)].copy()
+    home_games = df[df["HomeTeam"] == team].copy()
+    away_games = df[df["AwayTeam"] == team].copy()
 
     home_games["pts"] = home_games["FTR"].map({"H": 3, "D": 1, "A": 0})
     away_games["pts"] = away_games["FTR"].map({"H": 0, "D": 1, "A": 3})
