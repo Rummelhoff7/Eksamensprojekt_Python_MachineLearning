@@ -162,7 +162,7 @@ def chat(req: ChatRequest):
                 {"role": "system", "content": "Du er en Premier League fodboldekspert."},
                 {"role": "user", "content": req.message}
             ],
-            "max_tokens": 300,
+            "max_tokens": 200,
         },
         timeout=30,
     )
