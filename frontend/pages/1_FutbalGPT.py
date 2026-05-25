@@ -18,10 +18,9 @@ if st.button("Send"):
     with st.spinner("Tænker..."):
         #sender question til til /chat endpoint i backend som en json body
         answer = requests.post(f"{BACKEND_URL}/chat", json={"message": question})
-        st.write(answer.json()["response"]) #konverterer svaret til dictionary
 
         #Error handling
         if answer.status_code == 200:
-            st.write(answer.json()["response"])
+            st.write(answer.json()["response"]) #konverterer svaret til dictionary
         else:
             st.error("Noget gik galt. Prøv igen.")

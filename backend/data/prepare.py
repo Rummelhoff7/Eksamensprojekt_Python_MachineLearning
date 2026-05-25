@@ -85,10 +85,6 @@ def get_h2h(df, home_team, away_team, date):
 
 #Bygger features til træning. Går igennem alle kampe og beregner features FØR hver kamp — ingen data leakage.
 def build_features(df):
-    """
-    Bygger features til træning.
-    Går igennem alle kampe og beregner features FØR hver kamp — ingen data leakage.
-    """
     df = df.copy()
     df["Date"] = pd.to_datetime(df["Date"], format="mixed", errors="coerce")
     df = df.sort_values("Date").reset_index(drop=True)
