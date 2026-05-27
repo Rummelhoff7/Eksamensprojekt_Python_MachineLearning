@@ -94,17 +94,17 @@ if "selected_team" in st.session_state:
     with graph_col1:
         st.subheader("Form over tid")
         fig, ax = plt.subplots(figsize=(6, 3))
-        ax.plot(form, marker="o", color="#1e90ff") #linjediagram
-        ax.set_xticks(range(len(form)))
-        ax.set_xticklabels(range(1, len(form) + 1))
+        ax.plot(form, marker="o", color="#1e90ff") #linjediagram med en cirkel på datapunkt
+        ax.set_xticks(range(len(form))) #sætter tick position på x-akse. En per kamp
+        ax.set_xticklabels(range(1, len(form) + 1)) #sætter labels på
         ax.set_ylabel("Point")
         ax.set_xlabel("Kamp")
         ax.set_yticks([0, 1, 3]) # kun mulige point værdier
         ax.set_ylim(-0.2, 3.2)  # lidt luft over og under
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        st.pyplot(fig,use_container_width=False)
-        plt.close()
+        ax.spines["top"].set_visible(False) #ren look
+        ax.spines["right"].set_visible(False) # look
+        st.pyplot(fig,use_container_width=False) # Viser graf i streamlit
+        plt.close() #Frigiver hukommelse
 
     #Graf 2: 
     #gs er gennemsnit per kamp
@@ -120,6 +120,7 @@ if "selected_team" in st.session_state:
         bars_home = ax.bar(x - width/2, home_values, width, label="Hjemme", color="#1e90ff")
         bars_away = ax.bar(x + width/2, away_values, width, label="Ude",    color="#ff4444")
 
+        #Tilføjer tal oven på hver sølje med præcis værdi
         for bar in bars_home:
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
                     f"{bar.get_height():.0f}", ha="center", fontsize=9)
@@ -127,13 +128,14 @@ if "selected_team" in st.session_state:
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
                     f"{bar.get_height():.0f}", ha="center", fontsize=9)
 
-        ax.set_xticks(x)
-        ax.set_xticklabels(categories)
-        ax.legend()
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        st.pyplot(fig,use_container_width=False)
-        plt.close()
+        ax.set_xticks(x) #sætter x aksens tick position
+        ax.set_xticklabels(categories) #sætter labels på dem
+        ax.legend() # Viser forklaring med hjemme/ude farver
+        #Skjuler øverste og højre kant, rent look og style
+        ax.spines["top"].set_visible(False) #Skjuler øverste og højre kant, rent look og style
+        ax.spines["right"].set_visible(False) # 
+        st.pyplot(fig,use_container_width=False) # viser graf i ST
+        plt.close() #Frigiver hukommelse
 
 
     #Graf 3
@@ -141,11 +143,11 @@ if "selected_team" in st.session_state:
     with graph_col3:
         st.subheader("Sejr/Uafgjort/Tab")
 
-        labels = [f"Sejr ({results['wins']})", f"Uafgjort ({results['draws']})", f"Tab ({results['losses']})"]
-        values = [results["wins"], results["draws"], results["losses"]]
+        labels = [f"Sejr ({results['wins']})", f"Uafgjort ({results['draws']})", f"Tab ({results['losses']})"] # Tekst labels, f.eks. sejr (15)
+        values = [results["wins"], results["draws"], results["losses"]] #De tre værdier
         colors = ["#1e90ff", "#a0a0a0", "#ff4444"]
 
-        fig, ax = plt.subplots(figsize=(6, 3))
+        fig, ax = plt.subplots(figsize=(6, 3)) #str på chart
         ax.pie(values, labels=None, colors=colors, autopct="%1.0f%%") #pie chart
         ax.legend(labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.1)) # placerer legenden under grafen i 3 kolonner
         st.pyplot(fig,use_container_width=False)

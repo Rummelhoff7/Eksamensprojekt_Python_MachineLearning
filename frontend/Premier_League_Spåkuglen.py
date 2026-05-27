@@ -66,6 +66,7 @@ st.text("De sidste 5 kampe")
 
 stat_col1, stat_col2 = st.columns(2)
 
+#Henter fra backend
 home_stats = get_team_stats(home_team, "home")
 away_stats = get_team_stats(away_team, "away")
 

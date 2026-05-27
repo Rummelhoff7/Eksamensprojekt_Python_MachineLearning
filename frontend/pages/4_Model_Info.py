@@ -78,9 +78,9 @@ with cm_col:
         for j in range(3):
             ax.text(j, i, cm[i, j], ha="center", va="center", fontsize=12, fontweight="bold")
 
-    plt.colorbar(im, ax=ax)
-    plt.tight_layout()
-    st.pyplot(fig, use_container_width=False)
+    plt.colorbar(im, ax=ax) #Farvebjælker
+    plt.tight_layout() #Justerer margin og spacing
+    st.pyplot(fig, use_container_width=False) 
     plt.close()
 
 with fi_col:
@@ -95,7 +95,7 @@ with fi_col:
     sorted_pairs = sorted(zip(values, features), reverse=True)
     values, features = zip(*sorted_pairs) # pakker de sorterede par ud igen i to separate lister
 
-    # Oversætter tekniske navne til dansk
+    # Oversætter tekniske navne til dansk. Dictionary
     feature_labels = {
         "h_home_gs": "Hjemmehold mål scoret",
         "h_home_gc": "Hjemmehold mål lukket ind",
@@ -112,7 +112,7 @@ with fi_col:
     features = [feature_labels.get(f, f) for f in features]
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.barh(features, values, color="#1e90ff")
+    ax.barh(features, values, color="#1e90ff") #Vandret søjlediagram 
     ax.set_xlabel("Importance")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)

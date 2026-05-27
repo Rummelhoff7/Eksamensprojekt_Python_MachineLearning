@@ -84,6 +84,7 @@ def get_team_stats(team: str, side: str):
     if side not in ["home", "away"]:
         raise HTTPException(status_code=400, detail="Side skal være 'home' eller 'away'")
 
+    # Bruger kun seneste sæson så statistikken er aktuel
     latest_season = _df["season"].max()
     df = _df[_df["season"] == latest_season]
     future = pd.Timestamp.now()
@@ -129,6 +130,7 @@ def analyze(req: AnalysisRequest):
     if not api_key:
         return AnalysisResponse(analysis="Mistral API nøgle mangler.")
 
+    # Prompt sendes til Mistral med kampinfo og sandsynligheder
     prompt = f"""Du er en Premier League fodboldekspert. Analyser denne kamp:
 {req.home_team} (hjemme) vs {req.away_team} (ude)
 
@@ -172,7 +174,7 @@ def chat(req: ChatRequest):
         json={
             "model": "mistral-small-latest",
             "messages": [
-                {"role": "system", "content": "Du er en Premier League fodboldekspert."},
+                {"role": "system", "content": "Du er en Premier League fodboldekspert."},  # sætter Mistrals rolle
                 {"role": "user", "content": req.message}
             ],
             "max_tokens": 300,
@@ -200,6 +202,7 @@ def get_table(season: str):
         home_games = df[df["HomeTeam"] == team]
         away_games = df[df["AwayTeam"] == team]
 
+        # Sejre tælles både hjemme (FTR="H") og ude (FTR="A")
         wins   = (home_games["FTR"] == "H").sum() + (away_games["FTR"] == "A").sum()
         draws  = (home_games["FTR"] == "D").sum() + (away_games["FTR"] == "D").sum()
         losses = (home_games["FTR"] == "A").sum() + (away_games["FTR"] == "H").sum()
