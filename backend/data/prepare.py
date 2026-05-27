@@ -175,7 +175,7 @@ def get_prediction_features(df, home_team, away_team):
 
 #Returnerer point per kamp for de seneste n kampe i nyeste sæson.
 def get_form_history(df, team, n=10):
-    #Finder den nyeste sæson og filtrerre så vi kun kigger på den. Bruges til formk graf
+    #Finder den nyeste sæson og filtrere så vi kun kigger på den. Bruges til form graf
     latest_season = df["season"].max()
     df = df[df["season"] == latest_season]
 
