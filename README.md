@@ -11,20 +11,18 @@ Begge valgfag er slået sammen i dette projekt.
 - Model Info med confusion matrix, feature importance og classification report
 
 ## Teknologier
-| Teknologi | Bruges til 
-
--FastAPI:      Backend API 
--Streamlit:    Frontend 
--XGBoost:      Machine learning model 
--Optuna:       Automatisk hyperparameter tuning 
--Pandas:       Databehandling 
--Numpy:        Databehandling i grafer 
--Matplotlib:   Grafer 
--Mistral AI:   AI analyse og chat 
--Docker:       Deployment 
--pytest:       Tests 
--ruff:         Code analysis 
--pyright:      Type checking 
+- **FastAPI** — Backend API
+- **Streamlit** — Frontend
+- **XGBoost** — Machine learning model
+- **Optuna** — Automatisk hyperparameter tuning
+- **Pandas** — Databehandling
+- **Numpy** — Databehandling i grafer
+- **Matplotlib** — Grafer
+- **Mistral AI** — AI analyse og chat
+- **Docker** — Deployment
+- **pytest** — Tests
+- **ruff** — Code analysis
+- **pyright** — Type checking
 
 ## Sådan starter man projektet
 ### Med Docker 
