@@ -6,3 +6,5 @@ data/raw/
 *.h5
 *.pkl
 .DS_Store
+
+.
