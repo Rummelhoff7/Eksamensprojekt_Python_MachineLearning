@@ -4,10 +4,11 @@
 # Her kan man vælge to hold og forudsige resulatet af kampen. 
 
 
-import streamlit as st
-import requests
-import matplotlib.pyplot as plt 
-import os
+import streamlit as st          # Streamlit framework til frontend
+import requests                 # HTTP requests til backend
+import matplotlib.pyplot as plt #Tegner sansynlighedsgraf
+import os                       #Læser backend env til docker
+
 
 
 #Henter backend url, bruges i docker.
@@ -17,6 +18,8 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 st.set_page_config(page_title="Premier League Predictor", layout="wide")
 
 st.title("Premier League Match Predictor")
+st.caption("Forudsig kampresultater med machine learning. Lækker data til Jon")
+
 
 st.divider()
 
@@ -32,7 +35,7 @@ def get_teams():
 try:
     teams = get_teams()
 except Exception:
-    st.error("Kunne ikke forbinde til backend. Sørg for at API'en kører.")
+    st.error("Backend fejl. Sørg for at API'en kører.")
     st.stop()
 
 
@@ -47,8 +50,8 @@ with col2:
     away_team = st.selectbox("Udehold", away_options)
 
 
-# Cacher.
-#Henter seneste 5 kampes statisik for begge hold og viser dem som metrics
+# Cacher statistik for et hold i 1 time
+#Henter seneste 5 kampes statistik for begge hold og viser dem som metrics
 @st.cache_data(ttl=3600)
 def get_team_stats(team: str, side: str):
     r = requests.get(f"{BACKEND_URL}/stats/{team}/{side}") # Kalder dette endpoint
@@ -65,8 +68,6 @@ stat_col1, stat_col2 = st.columns(2)
 
 home_stats = get_team_stats(home_team, "home")
 away_stats = get_team_stats(away_team, "away")
-
-
 
 with stat_col1:
     st.subheader(f"{home_team}")
@@ -105,58 +106,67 @@ if st.button("Forudsig kamp", type="primary", use_container_width=True):
     # konverterer HTTP-svaret fra backend til et json.
     pred = pred_resp.json()
 
+    # Graf og resultat vises side om side
+    chart_col, result_col = st.columns([1.2, 1])
+
     # Selve grafen der viser resultatet visuelt fra modellen
-    fig, ax = plt.subplots(figsize=(5, 3))
-    labels = [f"{home_team}\nVinder", "Uafgjort", f"{away_team}\nVinder"]
-    probs  = [pred["home_win_prob"], pred["draw_prob"], pred["away_win_prob"]]
-    colors = ["#1e90ff", "#a0a0a0", "#ff4444"]
+    with chart_col:
+        fig, ax = plt.subplots(figsize=(4, 2))
+        labels = [f"{home_team}\nVinder", "Uafgjort", f"{away_team}\nVinder"]
+        probs  = [pred["home_win_prob"], pred["draw_prob"], pred["away_win_prob"]]
+        colors = ["#1e90ff", "#a0a0a0", "#ff4444"]
 
-    bars = ax.barh(labels, [p * 100 for p in probs], color=colors, height=0.5)
+        bars = ax.barh(labels, [p * 100 for p in probs], color=colors, height=0.5)
 
-    for bar, prob in zip(bars, probs):
-        ax.text(
-            bar.get_width() + 0.5,
-            bar.get_y() + bar.get_height() / 2,
-            f"{prob:.1%}",
-            va="center",
-            fontsize=12,
-            fontweight="bold",
-        )
+        for bar, prob in zip(bars, probs):
+            ax.text(
+                bar.get_width() + 0.5,
+                bar.get_y() + bar.get_height() / 2,
+                f"{prob:.1%}",
+                va="center",
+                fontsize=10,
+                fontweight="bold",
+            )
 
-    ax.set_xlim(0, 100)
-    ax.set_xlabel("Sandsynlighed (%)")
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    st.pyplot(fig)
-    plt.close()
+        ax.set_xlim(0, 110)
+        ax.set_xlabel("Sandsynlighed (%)")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        st.pyplot(fig, use_container_width=False)
+        plt.close()
 
-    # 
-    result_map = {
-        "H": f" {home_team} vinder",
-        "D": "🤝 Uafgjort",
-        "A": f" {away_team} vinder",
-    }
-    st.success(f"**Forudsagt resultat: {result_map[pred['predicted_result']]}**")
+    # Forudsagt resultat og sandsynligheder vises i højre kolonne
+    with result_col:
+        result_map = {
+            "H": f"{home_team} vinder",
+            "D": "Uafgjort",
+            "A": f"{away_team} vinder",
+        } # mapper modellens output (H/D/A) til læsbar tekst
 
-    #
-    st.divider()
+        st.success(f"**Forudsagt resultat:**\n\n{result_map[pred['predicted_result']]}")
 
-    #Sandsynlighederne sendes til /analyze POST endpoint som Kalder Mistral og returener tekstanalyse af resulat
-    st.subheader("AI Matchanalyse")
-    with st.spinner("Genererer analyse..."):
-        analysis_resp = requests.post(
-            f"{BACKEND_URL}/analyze", #endpoint
-            json={
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_win_prob": pred["home_win_prob"],
-                "draw_prob": pred["draw_prob"],
-                "away_win_prob": pred["away_win_prob"],
-            },
-        )
+        # Viser de tre sandsynligheder som metrics
+        st.metric(f"{home_team} vinder", f"{pred['home_win_prob']:.1%}")
+        st.metric("Uafgjort",            f"{pred['draw_prob']:.1%}")
+        st.metric(f"{away_team} vinder", f"{pred['away_win_prob']:.1%}")
 
-    #error handling
-    if analysis_resp.status_code == 200:
-        st.write(analysis_resp.json()["analysis"])
+    #Sandsynlighederne sendes til /analyze POST endpoint som kalder Mistral og returnerer tekstanalyse af resultat
+    #st.expander folder AI analysen ind så siden ikke er for lang
+    with st.expander("AI Matchanalyse", expanded=False):
+        with st.spinner("Genererer analyse..."):
+            analysis_resp = requests.post(
+                f"{BACKEND_URL}/analyze", #endpoint
+                json={
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_win_prob": pred["home_win_prob"],
+                    "draw_prob": pred["draw_prob"],
+                    "away_win_prob": pred["away_win_prob"],
+                },
+            )
+
+        #error handling
+        if analysis_resp.status_code == 200:
+            st.write(analysis_resp.json()["analysis"])
 
 

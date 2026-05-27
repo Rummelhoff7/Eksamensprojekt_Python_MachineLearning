@@ -8,6 +8,8 @@
 import pandas as pd
 from pathlib import Path
 
+#Indlæser alle csv-filer fra data/raw og kombinerer til et DataFrame.
+#Returnerer en kombineret dataframe med alle kampe sorteret
 def load_data() -> pd.DataFrame:
 
     #finder csv mappen med filerne
@@ -27,6 +29,7 @@ def load_data() -> pd.DataFrame:
     combined = pd.concat(all_seasons, ignore_index=True)
     
     # Beholder kun relevante kolonner
+    # FTHG=hjemme mål, FTAG=ude mål, FTR=resultat (H/D/A), HS=skud hjemme, HST=skud på mål hjemme osv.
     cols = ["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", 
             "FTR", "HTHG", "HTAG", "HS", "AS", "HST", "AST",
             "HC", "AC", "HY", "AY", "HR", "AR", "season"]
@@ -41,6 +44,7 @@ def load_data() -> pd.DataFrame:
     
     return combined
 
+#Kør direkte for at teste at data indlæses korrekt
 if __name__ == "__main__":
     df = load_data()
     print(f"Loaded {len(df)} matches")

@@ -8,12 +8,13 @@
 #kilde: https://pydantic.dev/docs/validation/latest/concepts/models
 from pydantic import BaseModel
 
-
+# Hvilke hold skal spille mod hinanden
 class PredictionRequest(BaseModel):
     home_team: str
     away_team: str
 
 
+# Modellens forudsigelse med sandsynligheder for hvert udfald
 class PredictionResponse(BaseModel):
     home_team: str
     away_team: str
@@ -23,6 +24,7 @@ class PredictionResponse(BaseModel):
     predicted_result: str  # "H", "D" eller "A"
 
 
+# Kampdata sendt til Mistral for at generere en analyse
 class AnalysisRequest(BaseModel):
     home_team: str
     away_team: str
@@ -31,12 +33,16 @@ class AnalysisRequest(BaseModel):
     away_win_prob: float
 
 
+# AI-analysen returneret fra Mistral
 class AnalysisResponse(BaseModel):
     analysis: str
 
 
+# Liste af alle hold i datasættet
 class TeamListResponse(BaseModel):
     teams: list[str]
 
+
+# Brugerens besked til chatbotten
 class ChatRequest(BaseModel):
     message: str

@@ -1,11 +1,10 @@
 # Viser statistik og grafer for et valgt hold.
-#
 
-import streamlit as st
-import requests
-import os
-import matplotlib.pyplot as plt
-import numpy as np
+import streamlit as st  #Streamlit framework til frontend
+import requests #HTTP request
+import os #Læser backend env til docker
+import matplotlib.pyplot as plt #tegner graferne
+import numpy as np #beregne positioner på grafer
 
 
 #Henter backend url, bruges i docker.
@@ -45,6 +44,17 @@ TEAM_LOGOS = {
 teams = list(TEAM_LOGOS.keys())
 
 
+# Cacher data for et hold i 1 time så siden ikke kalder backend ved hvert klik
+# Henter hjemme/ude statistik, formhistorik og resultater for et hold fra backend
+@st.cache_data(ttl=3600)
+def get_team_data(team: str):
+    stats      = requests.get(f"{BACKEND_URL}/stats/{team}/home").json()
+    away_stats = requests.get(f"{BACKEND_URL}/stats/{team}/away").json()
+    form       = requests.get(f"{BACKEND_URL}/form/{team}").json()["form"]
+    results    = requests.get(f"{BACKEND_URL}/results/{team}").json()
+    return stats, away_stats, form, results
+
+
 #Laver 10 kolonner og placeret hvert hold i den rigtige kolonne.
 cols = st.columns(10)
 for i, team in enumerate(teams):
@@ -56,6 +66,7 @@ for i, team in enumerate(teams):
             # Session_state er en måde at gemme data mellem Streamlit kørsler, vi gemmer hvilket hold der er valgt til at vise data.
             st.session_state["selected_team"] = team
 
+
 #Vises kun hvis der er valgt et hold
 if "selected_team" in st.session_state:
     selected_team = st.session_state["selected_team"]
@@ -63,10 +74,7 @@ if "selected_team" in st.session_state:
     st.subheader(f"{selected_team}")
 
     # Henter al data fra backend for det valgte hold
-    stats      = requests.get(f"{BACKEND_URL}/stats/{selected_team}/home").json()
-    away_stats = requests.get(f"{BACKEND_URL}/stats/{selected_team}/away").json()
-    form       = requests.get(f"{BACKEND_URL}/form/{selected_team}").json()["form"]
-    results    = requests.get(f"{BACKEND_URL}/results/{selected_team}").json()
+    stats, away_stats, form, results = get_team_data(selected_team)
 
 
     # Viser samme data for holdet, så der kommer lidt mere fyld
@@ -79,20 +87,20 @@ if "selected_team" in st.session_state:
     st.divider()
 
     # Grafer ved siden af hinanden
-    graf_col1, graf_col2, graf_col3 = st.columns(3)
+    graph_col1, graph_col2, graph_col3 = st.columns(3)
 
     #Graf 1:
     #form er en liste af point. 
-    with graf_col1:
+    with graph_col1:
         st.subheader("Form over tid")
         fig, ax = plt.subplots(figsize=(6, 3))
         ax.plot(form, marker="o", color="#1e90ff") #linjediagram
         ax.set_xticks(range(len(form)))
-        ax.set_xticklabels(range(1, len(form) + 1)) # 
+        ax.set_xticklabels(range(1, len(form) + 1))
         ax.set_ylabel("Point")
         ax.set_xlabel("Kamp")
-        ax.set_yticks([0, 1, 3])
-        ax.set_ylim(-0.2, 3.2)
+        ax.set_yticks([0, 1, 3]) # kun mulige point værdier
+        ax.set_ylim(-0.2, 3.2)  # lidt luft over og under
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         st.pyplot(fig,use_container_width=False)
@@ -100,14 +108,15 @@ if "selected_team" in st.session_state:
 
     #Graf 2: 
     #gs er gennemsnit per kamp
-    with graf_col2:
+    with graph_col2:
         st.subheader("Hjemme vs. Ude")
         categories  = ["Mål scoret", "Mål lukket ind"]
         home_values = [round(stats["gs"] * 5), round(stats["gc"] * 5)] # ganges med 5 for at få total antal mål
         away_values = [round(away_stats["gs"] * 5), round(away_stats["gc"] * 5)]
-        x     = np.arange(len(categories))
+        x     = np.arange(len(categories)) # x-positioner for søjlerne
         width = 0.35
         fig, ax = plt.subplots(figsize=(6, 3))
+        # forskydes med width/2 så hjemme og ude søjler står ved siden af hinanden
         bars_home = ax.bar(x - width/2, home_values, width, label="Hjemme", color="#1e90ff")
         bars_away = ax.bar(x + width/2, away_values, width, label="Ude",    color="#ff4444")
 
@@ -129,7 +138,7 @@ if "selected_team" in st.session_state:
 
     #Graf 3
     #Pie chart med procentfordeling.
-    with graf_col3:
+    with graph_col3:
         st.subheader("Sejr/Uafgjort/Tab")
 
         labels = [f"Sejr ({results['wins']})", f"Uafgjort ({results['draws']})", f"Tab ({results['losses']})"]
@@ -138,7 +147,7 @@ if "selected_team" in st.session_state:
 
         fig, ax = plt.subplots(figsize=(6, 3))
         ax.pie(values, labels=None, colors=colors, autopct="%1.0f%%") #pie chart
-        ax.legend(labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.1))
+        ax.legend(labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.1)) # placerer legenden under grafen i 3 kolonner
         st.pyplot(fig,use_container_width=False)
         plt.close()
         
