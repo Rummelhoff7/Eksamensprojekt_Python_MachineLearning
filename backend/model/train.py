@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from data.loader import load_data # noqa: E402
 from data.prepare import build_features, FEATURE_COLS # noqa: E402
 
-MODEL_PATH = Path(__file__).parent / "pl_predictor.pkl"
+MODEL_PATH = Path(__file__).parent / "pl_predictor.pkl"  # sti til den gemte model
 
 #Metoder der træner selve XGBOOST model
 def train():
