@@ -10,6 +10,9 @@ Begge valgfag er slået sammen i dette projekt.
 - Ligatable per sæson med zoneopdeling
 - Model Info med confusion matrix, feature importance og classification report
 
+## Python version
+- Python 3.11
+
 ## Teknologier
 - **FastAPI** — Backend API
 - **Streamlit** — Frontend
@@ -25,21 +28,41 @@ Begge valgfag er slået sammen i dette projekt.
 - **pyright** — Type checking
 
 ## Sådan starter man projektet
-### Med Docker 
+
+### Med Docker (anbefalet)
 ```bash
 docker compose up
 ```
 Åbn http://localhost:8501
 
 ### Lokalt
-```bash
-# Start backend
-cd backend
-uvicorn main:app --reload
+Kræver Python 3.11
 
-# Start frontend (nyt terminal vindue)
+```bash
+# 1. Opret og aktiver virtual environment
+python -m venv .venv
+
+# Windows
+.venv\Scripts\Activate.ps1
+
+# Mac/Linux
+source .venv/bin/activate
+
+# 2. Installer pakker
+pip install -r requirements.txt
+
+# 3. Træn modellen (skal kun gøres én gang)
+cd backend
+python model/train.py
+cd ..
+
+# 4. Start backend (nyt terminal vindue)
+cd backend
+python -m uvicorn main:app --reload
+
+# 5. Start frontend (nyt terminal vindue)
 cd frontend
-streamlit run Premier_League_Spåkuglen.py #app.py
+streamlit run Premier_League_Spåkuglen.py
 ```
 
 ### Miljøvariabler
