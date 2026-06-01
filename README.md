@@ -37,7 +37,6 @@ docker compose up
 
 ### Lokalt
 Kræver Python 3.11
-<<<<<<< HEAD
 
 ```bash
 # 1. Opret og aktiver virtual environment
@@ -65,33 +64,6 @@ python -m uvicorn main:app --reload
 cd frontend
 streamlit run Premier_League_Spåkuglen.py
 ```
-=======
-
-# 1. Opret og aktiver virtual environment
-python -m venv .venv
-
-# Windows
-.venv\Scripts\Activate.ps1
-
-# Mac/Linux
-source .venv/bin/activate
-
-# 2. Installer pakker
-pip install -r requirements.txt
-
-# 3. Træn modellen (skal kun gøres én gang)
-cd backend
-python model/train.py
-cd ..
-
-# 4. Start backend (nyt terminal vindue)
-cd backend
-uvicorn main:app --reload
-
-# 5. Start frontend (nyt terminal vindue)
-cd frontend
-streamlit run Premier_League_Spåkuglen.py
->>>>>>> a65ccfc66bd8dcc577383833b7b6b6b645cce5f1
 
 ### Miljøvariabler
 Opret en `.env` fil i roden af projektet:
