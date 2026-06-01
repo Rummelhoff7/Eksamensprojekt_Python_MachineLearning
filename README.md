@@ -10,6 +10,9 @@ Begge valgfag er slået sammen i dette projekt.
 - Ligatable per sæson med zoneopdeling
 - Model Info med confusion matrix, feature importance og classification report
 
+## Python version
+- Python 3.11
+
 ## Teknologier
 - **FastAPI** — Backend API
 - **Streamlit** — Frontend
