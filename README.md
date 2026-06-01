@@ -30,6 +30,7 @@ Begge valgfag er slået sammen i dette projekt.
 ## Sådan starter man projektet
 
 ### Med Docker (anbefalet)
+- Første gang tager det 5-10 minutter da modellen skal trænes pga. Optuna.
 ```bash
 docker compose up
 ```
